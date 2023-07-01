@@ -65,7 +65,8 @@ class Cycling extends Workout {
   }
 
   calcSpeed() {
-    this.speed = this.distance / (this.duration / 60);
+    let speed = this.distance / (this.duration / 60);
+    this.speed = speed.toFixed(2);
     return this.speed;
   }
 }
@@ -77,10 +78,10 @@ class App {
 
   constructor() {
     this.#getPosition();
-
     form.addEventListener('submit', this.#newWorkout.bind(this));
-
     inputType.addEventListener('change', this.#toggleElevationField);
+    containerWorkouts.addEventListener('click', this.#moveTo.bind(this));
+    this.#getLocalStorage();
   }
 
   #getPosition() {
@@ -100,6 +101,10 @@ class App {
         '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     }).addTo(this.#map);
     this.#map.on('click', this.#showForm.bind(this));
+
+    this.#workouts.forEach(work => {
+      this.renderWorkoutMarker(work);
+    });
   }
   #showForm(mapE) {
     this.#mapEvent = mapE;
@@ -164,6 +169,7 @@ class App {
     this.renderWorkoutMarker(workout);
     this.renderWorkout(workout);
     this.#hideForm();
+    this.#setLocalStorage();
   }
 
   renderWorkoutMarker(workout) {
@@ -232,6 +238,27 @@ class App {
     }
 
     form.insertAdjacentHTML('afterend', html);
+  }
+
+  #moveTo(e) {
+    const workoutEl = e.target.closest('.workout');
+    if (!workoutEl) return;
+
+    const workout = this.#workouts.find(
+      work => work.id === workoutEl.dataset.id
+    );
+    this.#map.setView(workout.coords, 13);
+  }
+  #setLocalStorage() {
+    localStorage.setItem('workouts', JSON.stringify(this.#workouts));
+  }
+  #getLocalStorage() {
+    const data = JSON.parse(localStorage.getItem('workouts'));
+    if (!data) return;
+    this.#workouts = data;
+    this.#workouts.forEach(work => {
+      this.renderWorkout(work);
+    });
   }
 }
 
